@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Biber – Mail &amp; Kalender</title>
+<style>
+body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#F1F1F2;color:#1D1D1F;margin:0;padding:20px}
+.c{max-width:560px;margin:0 auto;background:#fff;border:1px solid #E2E3E6;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px}
+h1{font-size:18px;margin:0}.m{color:#6B6F76;font-size:14px;margin:0}
+.b{display:block;width:100%;box-sizing:border-box;text-align:center;border:0;border-radius:12px;padding:15px;font-size:17px;font-weight:600;background:#BE000D;color:#fff;text-decoration:none;cursor:pointer}
+.s{background:#fff;color:#1D1D1F;border:1px solid #E2E3E6}
+.d{background:#1D1D1F}
+pre{white-space:pre-wrap;background:#F6F6F7;border-radius:10px;padding:12px;font:14px/1.45 -apple-system,system-ui,sans-serif;margin:0;max-height:260px;overflow:auto}
+.t{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1D1D1F;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;display:none}
+.ok{color:#1E7F4F;font-weight:600}
+</style></head><body><div class="c" id="c"></div><div class="t" id="t"></div>
+<script>
+const $ = s => document.querySelector(s);
+const toast = m => { const t = $('#t'); t.textContent = m; t.style.display = 'block'; clearTimeout(window._t); window._t = setTimeout(() => t.style.display = 'none', 3500); };
+const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let D = {}; try { D = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) { }
+let pdfFile = null;
+async function copy(txt) { try { await navigator.clipboard.writeText(txt); return true; } catch (e) { return false; } }
+const enc = encodeURIComponent;
+function render() {
+  const c = $('#c'); let h = '';
+  if (D.to !== undefined) {
+    const mailto = `mailto:${enc(D.to)}?subject=${enc(D.sub)}&body=${enc(D.body)}`;
+    h += `<h1>${esc(D.sub || 'E-Mail')}</h1><p class="m">An: ${esc(D.to)}</p><a class="b" id="mail" href="${esc(mailto)}">✉︎ In Mail-App öffnen</a><button class="b s" id="cp">Text kopieren</button><pre>${esc(D.body)}</pre>`;
+  }
+  if (D.ics) h += `<button class="b d" id="cal">📅 Termin in Kalender eintragen</button><p class="m">Beim Hinzufügen den gewünschten Kalender wählen – mit deinem Exchange-Konto in den iPad-Einstellungen landet der Termin auch in Outlook.</p>`;
+  if (!h) h = '<h1>Nichts zu tun</h1><p class="m">Diese Seite wird vom PV-Angebotsrechner geöffnet.</p>';
+  h += `<p class="m">Danach kannst du diesen Tab schließen und zum Rechner zurückkehren.</p>`;
+  c.innerHTML = h;
+  const cp = $('#cp'); if (cp) cp.onclick = async () => toast(await copy(D.body) ? 'Text kopiert.' : 'Bitte Text markieren und kopieren.');
+  const cal = $('#cal'); if (cal) cal.onclick = () => { location.href = URL.createObjectURL(new Blob([D.ics], { type: 'text/calendar' })); };
+}
+window.addEventListener('message', e => { const m = e.data; if (m && m.type === 'biber-pdf' && m.buf) { pdfFile = new File([m.buf], m.name || 'Angebot.pdf', { type: 'application/pdf' }); render(); } if (m && m.type === 'biber-pdf-error') { D.pdf = false; render(); toast('PDF konnte nicht erstellt werden.'); } });
+window.addEventListener('hashchange', () => { try { D = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) { } render(); });
+render();
+if (D.to !== undefined && !D.ics) setTimeout(() => { location.href = `mailto:${enc(D.to)}?subject=${enc(D.sub)}&body=${enc(D.body)}`; }, 400);
+if (window.opener) try { window.opener.postMessage({ type: 'biber-go-ready' }, '*'); } catch (e) { }
+</script></body></html>
