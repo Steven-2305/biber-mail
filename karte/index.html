@@ -11,9 +11,11 @@
 .b.on{background:#1d1d1f;color:#fff;border-color:#1d1d1f}.b.r{background:#BE000D;border-color:#BE000D;color:#fff}
 iframe{position:fixed;left:0;right:0;bottom:0;width:100%;border:0}
 .err{padding:120px 20px;text-align:center}
+.tip{position:fixed;left:12px;right:12px;bottom:14px;z-index:6;background:rgba(29,29,31,.92);color:#fff;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.4}.tip button{margin-left:8px;border:0;border-radius:8px;padding:5px 12px;font-weight:700;background:#fff;color:#1d1d1f}
 </style></head><body>
 <div class="top"><div class="ad" id="ad"></div><div class="dist" id="dist">Anfahrt wird berechnet …</div>
 <div class="btns"><button class="b on" data-t="k">Satellit</button><button class="b" data-t="m">Karte</button><a class="b" id="gm" target="_blank" rel="noopener">Google Maps</a><a class="b r" id="nav" target="_blank" rel="noopener">Navigation</a></div></div>
+<div class="tip" id="tip">📷 Dach als Bild in den Rechner übernehmen: Screenshot machen (Ein/Aus-Taste + Lauter), dann im Rechner bei „Dach“ auf <b>„Bild einfügen“</b> tippen und den Screenshot aus Fotos wählen. <button id="tipx">OK</button></div>
 <iframe id="map" allowfullscreen loading="eager" referrerpolicy="no-referrer-when-downgrade"></iframe>
 <script>
 let P = {}; try { P = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) {}
@@ -43,4 +45,5 @@ else {
     });
   }).catch(() => { D.textContent = 'Anfahrt: über „Navigation“ anzeigen'; fit(); });
 }
+document.getElementById('tipx') && (document.getElementById('tipx').onclick = () => document.getElementById('tip').remove());
 </script></body></html>
