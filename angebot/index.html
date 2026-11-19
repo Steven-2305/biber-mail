@@ -35,13 +35,22 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 6px;b
 .pick{display:block;width:100%;margin-top:12px;padding:13px;border-radius:10px;border:2px solid #BE000D;background:#fff;color:#BE000D;font-weight:700;font-size:15px;cursor:pointer}.pick.rec{background:#BE000D;color:#fff}
 .pk{margin-top:10px;display:flex;flex-direction:column;gap:8px}.pk p{margin:0;font-size:13px;color:#555}.pk a{display:block;text-align:center;padding:11px;border-radius:10px;text-decoration:none;font-weight:700;background:#F2F2F2;color:#222}.pk a.w{background:#25D366;color:#fff}.pk a.m{background:#222;color:#fff}
 .cb2{background:#BE000D!important;color:#fff!important}
+.mhd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.mhd h2{margin:0!important}
+.mrow{display:grid;grid-template-columns:150px 1fr 95px 70px;align-items:center;gap:10px;width:100%;padding:8px 6px;border:0;border-radius:8px;background:none;font:inherit;color:inherit;text-align:left}
+button.mrow{cursor:pointer}.mrow.sel{background:#FFF1F0}.mrow.sel .ml{font-weight:700}.ml small{color:#777;font-size:12px}
+.mbar{height:22px;background:#F0F0F0;border-radius:5px;display:flex;overflow:hidden}.mbar i{display:block;height:100%}.m0{background:#7D828B}.m1{background:#BE000D}.m2{background:#E8A317}
+.mrow b{text-align:right;font-size:16px}.mrow em{font-style:normal;font-weight:700;text-align:right}.mrow em.pos{color:#0A7D3B}.mrow em.neg{color:#BE000D}
+.mleg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#666;margin:6px 0 0 6px}.mleg i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.mafter{margin-top:12px;background:#EAF6EE;border-radius:10px;padding:11px 14px;font-size:15px}
+.bank{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:12.5px;line-height:1.55;color:#333;background:#FAFAFA}
+@media(max-width:640px){.mrow{grid-template-columns:92px 1fr 72px;gap:6px}.mrow em{grid-column:3;font-size:13px}.mrow b{font-size:14px}.ml small{display:block}}
 </style></head>
 <body><header><img src="logo.png" alt="Biber Photovoltaik"><span style="color:var(--mute);font-size:13px">Ihr persönliches Angebot</span></header>
 <main id="m"></main>
 <script>
 const COL = ['#7D828B', '#BE000D', '#1D1D1F'];
 const nf = (v, d = 0) => (isFinite(v) ? v : 0).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
-const eur = v => nf(v) + ' €';
+const eur = v => nf(v) + ' €', eur2 = v => nf(v, 2) + ' €';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CAT = {"cat": {"m": {"m460": "Solarfabrik Mono S4 Halfcut Trend Full Black 460W", "m480": "Solarfabrik Mono S4 BC 480W Full Black – Limited Edition"}, "i": {"a6": "Alpha SMILE-G3-T6 Hybrid Wechselrichter", "a8": "Alpha SMILE-G3-T8 Hybrid Wechselrichter", "a10": "Alpha SMILE-G3-T10 Hybrid Wechselrichter", "a15": "Alpha SMILE-G3-T15 Hybrid Wechselrichter", "a20": "Alpha SMILE-G3-T20 Hybrid Wechselrichter", "k4": "Kostal Plenticore S G3 4,0 kW", "k85": "Kostal Plenticore M G3 8,5 kW", "kp10": "Kostal PLENTICORE plus 10", "k15": "Kostal Plenticore L G3 15 kW", "f12": "Hybridwechselrichter FOXESS H3-12.0-E WIFI", "fr125": "FRONIUS SYMO 12.5-3-M"}, "b": {"a38": "Alpha SMILE-G3-BAT-3.8S", "a93": "AlphaESS SMILE-G3-BAT-9.3S", "dyn": "Dyness HV9640 Batteriemodul 3,84 kWh", "byd": "BYD Battery-Box Batteriemodul HVS+ 2,56 kWh", "sma": "SMA Home Storage 3.2 kWh Batteriespeicher"}, "e": {"wbA": "Alpha-ESS SMILE-G3-EVCT11 Wallbox", "wbAk": "Alpha-ESS SMILE-G3-EVCT11 Ladekabel", "wbE": "EVBox Elvi 11kW schwarz", "rfid": "Fronius Wattpilot RFID Tags", "wbM": "Montage/Installation einer Wallbox", "kw25": "Wallbox Kabelweg ab 15 m bis 25 m", "kw35": "Wallbox Kabelweg ab 26 m bis 35 m", "bbA": "Alpha Backup Box Plus", "nuK": "Enwitec Netzumschaltbox Kostal Plenticore G3 (D/CH)", "bsK": "KOSTAL BackUp Switch G3", "zs2": "Zählerschrank (2-Feld), alter bleibt Unterverteilung", "zs3": "Neuer Zählerschrank (3-Feld), alter bleibt Unterverteilung", "kv3": "Kleinverteiler 3-reihig", "spg": "Spezialgerüst Pauschalbetrag je Dachseite"}}, "f": {"n": "Steven Jentschke", "r": "Ihr PV-Fachberater vor Ort", "p": "05362 9752550", "e": "jentschke@biber-pv.de", "w": "https://wa.me/message/LOAQJFKYLLIIA1?src=qr", "b": "Unser Best-Preis-Versprechen", "s": "Seit über 20 Jahren Ihr Photovoltaik-Partner"}};
 const nm = (t, id) => (CAT.cat[t] && CAT.cat[t][id]) || id;
@@ -65,7 +74,7 @@ else {
   const rate = (p, i) => ann(tot(p, i) - S.down, fin()[1], S.t);
   const vd = (() => { const x = String(D.d || '').match(/(\d+)\.(\d+)\.(\d{4})/); if (!x) return null; const t = new Date(+x[3], +x[2] - 1, +x[1]); t.setDate(t.getDate() + (+D.va || 14)); t.setHours(23, 59, 59); return t; })();
   const exp = vd && vd < new Date(), vds = vd ? vd.toLocaleDateString('de-DE') : '';
-  let pick = null;
+  let pick = null, mp = D.rec || 0;
   const selTxt = i => { const p = D.p[i], ops = (p.oi || []).filter((o, j) => S.sel[i][j]).map(o => o[0]); return `Hallo ${F.n || ''},\n\nich interessiere mich für das Paket ${p.n} (${nf(p.kwp, 2)} kWp${p.kwh ? ', ' + nf(p.kwh, 1) + ' kWh Speicher' : ''})${ops.length ? ' mit ' + ops.join(' und ') : ''} – Gesamtpreis ${eur(tot(p, i))}${S.t ? `, Finanzierung über ${S.t} Jahre${S.down ? ' mit ' + eur(S.down) + ' Anzahlung' : ''} (ca. ${eur(rate(p, i))} im Monat)` : ''}.\n\nBitte melden Sie sich bei mir, um die nächsten Schritte zu besprechen.\n\nViele Grüße\n${D.gn || ''}`; };
   const mailto = (sub, body) => F.e ? `mailto:${F.e}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}` : '';
   function draw() {
@@ -84,17 +93,22 @@ else {
      <button class="pick ${i === D.rec ? 'rec' : ''}" data-pick="${i}">Dieses Paket wählen</button>
      ${pick === i ? `<div class="pk"><p>Wie möchten Sie mir Ihre Auswahl schicken?</p>${F.e ? `<a class="m" href="${esc(mailto('Meine Auswahl: Paket ' + p.n, selTxt(i)))}">Per E-Mail senden</a>` : ''}${F.w ? `<a class="w" href="${esc(F.w)}" data-wacopy="${i}">Per WhatsApp (Text wird kopiert)</a>` : ''}${F.p ? `<a class="t" href="tel:${esc(F.p.replace(/[^\d+]/g, ''))}">Lieber anrufen</a>` : ''}</div>` : ''}
    </div></article>`).join('')}</div>
-   <section class="mon"><h2>Ihr Monat im Vergleich</h2><table><tr><th></th>${D.p.map((p, i) => `<th style="color:${COL[i]}">${esc(p.n)}</th>`).join('')}</tr>
-    <tr><td>Stromkosten heute ohne PV</td>${D.p.map(p => `<td>${eur(p.td)}</td>`).join('')}</tr>
-    <tr><td>Mit PV finanziert (ca. Rate + laufende Kosten)</td>${D.p.map((p, i) => `<td><b>${eur(rate(p, i) + p.wp)}</b></td>`).join('')}</tr>
-    <tr><td>Nach der Finanzierung</td>${D.p.map(p => `<td>${eur(p.wp)}</td>`).join('')}</tr></table>
-    <p class="hint" style="margin-top:8px">Kennzahlen wie Autarkie, Amortisation und Rendite gelten für die Anlage ohne optionale Positionen.</p></section>
+   ${(() => { const i = mp, p = D.p[i], T = tot(p, i), L = Math.max(0, T - S.down), rows = D.fin.map(x => { const r = ann(L, x[1], +x[0]); return { y: +x[0], nom: x[1], eff: x[2], r, sum: r + p.wp, df: p.td - r - p.wp }; }), mx = Math.max(p.td, ...rows.map(x => x.r + Math.max(0, p.wp)), 1), ops = (p.oi || []).filter((o, j) => S.sel[i][j]).map(o => o[0]);
+     return `<section class="mon"><div class="mhd"><h2>Ihr Monat im Vergleich – Paket ${esc(p.n)}</h2><div class="chips">${D.p.map((q, j) => `<button class="chip ${j === i ? 'on' : ''}" data-mp="${j}">${esc(q.n)}</button>`).join('')}</div></div>
+      <p class="hint">Kreditrate + laufende Kosten (Reststrom − Einspeisung + Betrieb = ${eur(p.wp)} im Monat)${ops.length ? ' · inkl. ' + esc(ops.join(' + ')) : ''}${S.down ? ' · ' + eur(S.down) + ' Anzahlung' : ''}</p>
+      <div class="mrow"><span class="ml">Heute ohne PV</span><div class="mbar"><i class="m0" style="width:${p.td / mx * 100}%"></i></div><b>${eur(p.td)}</b><em></em></div>
+      ${rows.map(x => `<button class="mrow ${x.y === +S.t ? 'sel' : ''}" data-t="${x.y}"><span class="ml">${x.y} Jahre <small>${nf(x.eff, 2)} % eff.</small></span><div class="mbar"><i class="m1" style="width:${x.r / mx * 100}%"></i><i class="m2" style="width:${Math.max(0, p.wp) / mx * 100}%"></i></div><b>ca. ${eur(x.sum)}</b><em class="${x.df >= 0 ? 'pos' : 'neg'}">${x.df >= 0 ? '−' : '+'}${eur(Math.abs(x.df))}</em></button>`).join('')}
+      <div class="mleg"><span><i class="m1"></i>Kreditrate</span><span><i class="m2"></i>laufende Kosten</span><span>rechts: Differenz zu heute pro Monat</span></div>
+      <div class="mafter">Nach Ende der Finanzierung zahlen Sie nur noch rund <b>${eur(p.wp)} pro Monat</b> statt ${eur(p.td)} – eine Ersparnis von rund <b>${eur(p.td - p.wp)} monatlich</b>.</div>
+      <div class="bank"><b>Finanzierungsbeispiele Paket ${esc(p.n)}</b> (Nettodarlehensbetrag ${eur2(L)}): ${rows.map(x => `${x.y} Jahre: gebundener Sollzinssatz ${nf(x.nom, 2)} % p. a., effektiver Jahreszins ${nf(x.eff, 2)} %, ${x.y * 12} monatliche Raten à ${eur2(x.r)}, Gesamtbetrag ${eur2(x.r * x.y * 12)}`).join('; ')}. Sollzinsbindung = Gesamtlaufzeit. Darlehensgeber: ${esc(F.bk || 'Finanzierungspartner der Biber Photovoltaik GmbH')}${D.stand ? ', Konditionen Stand ' + esc(D.stand) : ''}. Bonität vorausgesetzt; maßgeblich ist das Vertragsangebot des Darlehensgebers.</div>
+      <p class="hint" style="margin-top:8px">Kennzahlen wie Autarkie, Amortisation und Rendite gelten für die Anlage ohne optionale Positionen.</p></section>`; })()}
    <section class="ct">${F.n ? `<img src="foto.jpg" alt="">` : ''}<div><b style="font-size:17px">${esc(F.n || '')}</b><div style="color:var(--mute);font-size:14px">${esc(F.r || 'Ihr Ansprechpartner')} · Biber Photovoltaik GmbH</div>
      <div class="bt">${F.w ? `<a class="w" href="${esc(F.w)}">WhatsApp</a>` : ''}${F.p ? `<a class="t" href="tel:${esc(F.p.replace(/[^\d+]/g, ''))}">Anrufen</a>` : ''}${F.e ? `<a class="m" href="mailto:${esc(F.e)}">E-Mail</a>` : ''}${F.e ? `<a class="cb2" href="${esc(mailto('Bitte um Rückruf', `Hallo ${F.n || ''},\n\nbitte rufen Sie mich zu meinem Solarangebot zurück.\nAm besten erreichen Sie mich: ____\n\nViele Grüße\n${D.gn || ''}`))}">Rückruf anfordern</a>` : ''}</div></div></section>
    <p class="small">Das ausführliche Angebot mit allen Positionen, Garantien und Datenblättern erhalten Sie als PDF per E-Mail. Angebot gültig ${D.va || 14} Tage ab ${esc(D.d)}. Biber Photovoltaik GmbH gibt mit diesen Daten eine Orientierung und keine Gewähr auf die Erträge, die vom Wetter und vom Verhalten des Kunden maßgeblich abweichen können. Finanzierung: Beispielraten${D.stand ? ' (Konditionen Stand ' + esc(D.stand) + ')' : ''}, Sollzinsbindung = Gesamtlaufzeit, Bonität vorausgesetzt; maßgeblich ist das Vertragsangebot des Darlehensgebers.</p>`;
   }
   draw();
-  m.addEventListener('click', e => { const pk = e.target.closest('[data-pick]'); if (pk) { pick = pick === +pk.dataset.pick ? null : +pk.dataset.pick; const y = scrollY; draw(); scrollTo(0, y); return; }
+  m.addEventListener('click', e => { const mb = e.target.closest('[data-mp]'); if (mb) { mp = +mb.dataset.mp; const y = scrollY; draw(); scrollTo(0, y); return; }
+    const pk = e.target.closest('[data-pick]'); if (pk) { pick = pick === +pk.dataset.pick ? null : +pk.dataset.pick; if (pick !== null) mp = pick; const y = scrollY; draw(); scrollTo(0, y); return; }
     const wc = e.target.closest('[data-wacopy]'); if (wc) { try { navigator.clipboard.writeText(selTxt(+wc.dataset.wacopy)); } catch (er) { } }
     const b = e.target.closest('[data-t]'); if (b) { S.t = +b.dataset.t; const y = scrollY; draw(); scrollTo(0, y); } });
   m.addEventListener('change', e => { const t = e.target; if (t.id === 'down') { S.down = Math.max(0, Math.round(+t.value || 0)); const y = scrollY; draw(); scrollTo(0, y); } if (t.dataset.o) { const [i, j] = t.dataset.o.split('.').map(Number); S.sel[i][j] = t.checked; const y = scrollY; draw(); scrollTo(0, y); } });
