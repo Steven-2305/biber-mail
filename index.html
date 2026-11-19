@@ -23,13 +23,19 @@ function render() {
   const c = $('#c'); let h = '';
   if (D.to !== undefined) {
     const mailto = `mailto:${enc(D.to)}?subject=${enc(D.sub)}&body=${enc(D.body)}`;
-    h += `<h1>${esc(D.sub || 'E-Mail')}</h1><p class="m">An: ${esc(D.to)}</p><a class="b" id="mail" href="${esc(mailto)}">✉︎ In Mail-App öffnen</a><button class="b s" id="cp">Text kopieren</button><pre>${esc(D.body)}</pre>`;
+    h += `<h1>${esc(D.sub || 'E-Mail')}</h1><p class="m">An: ${esc(D.to)}</p><a class="b" id="mail" href="${esc(mailto)}">✉︎ In Mail-App öffnen</a><button class="b s" id="cph">Text mit verlinktem „WhatsApp“ kopieren</button><button class="b s" id="cp">Nur Text kopieren</button><p class="m">Für das Wort „WhatsApp“ als Link: Mail öffnen, den Text darin löschen und den formatiert kopierten Text einfügen.</p><pre>${esc(D.body)}</pre>`;
   }
   if (D.ics) h += `<button class="b d" id="cal">📅 Termin in Kalender eintragen</button><p class="m">Beim Hinzufügen den gewünschten Kalender wählen – mit deinem Exchange-Konto in den iPad-Einstellungen landet der Termin auch in Outlook.</p>`;
   if (!h) h = '<h1>Nichts zu tun</h1><p class="m">Diese Seite wird vom PV-Angebotsrechner geöffnet.</p>';
   h += `<p class="m">Danach kannst du diesen Tab schließen und zum Rechner zurückkehren.</p>`;
   c.innerHTML = h;
   const cp = $('#cp'); if (cp) cp.onclick = async () => toast(await copy(D.body) ? 'Text kopiert.' : 'Bitte Text markieren und kopieren.');
+  const cph = $('#cph'); if (cph) cph.onclick = async () => {
+    let html = esc(D.body);
+    html = html.replace(/WhatsApp\s*\((https?:\/\/[^\s)]+)\)/g, '<a href="$1">WhatsApp</a>').replace(/WhatsApp:\s*(https?:\/\/\S+)/g, '<a href="$1">WhatsApp</a>').replace(/(^|[^"])(https?:\/\/wa\.me\S+)/g, '$1<a href="$2">WhatsApp</a>').replace(/\n/g, '<br>');
+    const plain = D.body.replace(/WhatsApp\s*\((https?:\/\/[^\s)]+)\)/g, 'WhatsApp').replace(/WhatsApp:\s*(https?:\/\/\S+)/g, 'WhatsApp');
+    try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([plain], { type: 'text/plain' }) })]); toast('Formatiert kopiert – in der Mail einfügen.'); } catch (e) { toast('Formatiert kopieren geht hier nicht.'); }
+  };
   const cal = $('#cal'); if (cal) cal.onclick = () => { location.href = URL.createObjectURL(new Blob([D.ics], { type: 'text/calendar' })); };
 }
 window.addEventListener('message', e => { const m = e.data; if (m && m.type === 'biber-pdf' && m.buf) { pdfFile = new File([m.buf], m.name || 'Angebot.pdf', { type: 'application/pdf' }); render(); } if (m && m.type === 'biber-pdf-error') { D.pdf = false; render(); toast('PDF konnte nicht erstellt werden.'); } });

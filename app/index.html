@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Biber PV</title><meta name="apple-mobile-web-app-title" content="Biber PV">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+<style>body{font-family:-apple-system,system-ui,sans-serif;background:#fff;color:#1D1D1F;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.c{max-width:420px;padding:24px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}img{width:120px;height:120px}
+a,button{display:block;width:100%;box-sizing:border-box;border:0;border-radius:12px;padding:15px;font-size:17px;font-weight:600;text-decoration:none;cursor:pointer}
+a{background:#BE000D;color:#fff}button{background:#F1F1F2;color:#1D1D1F}p{color:#6B6F76;font-size:14px;margin:0}</style></head>
+<body><div class="c"><img src="icon512.png" alt="Biber Photovoltaik"><a id="go" href="https://claude.ai/artifact/7iHhYdiQrsUbhFYiEw75kA">PV-Angebotsrechner öffnen</a>
+<p id="m">Wird geöffnet …</p><button id="stop">Stopp – zum Home-Bildschirm hinzufügen</button></div>
+<script>
+const t = setTimeout(() => location.replace(document.getElementById('go').href), 1800);
+document.getElementById('stop').onclick = () => { clearTimeout(t); document.getElementById('m').innerHTML = 'Jetzt in Safari auf <b>Teilen</b> → <b>Zum Home-Bildschirm</b> tippen. Das Biber-Symbol öffnet künftig direkt den Rechner.'; document.getElementById('stop').style.display = 'none'; };
+</script></body></html>
