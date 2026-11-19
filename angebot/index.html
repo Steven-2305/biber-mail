@@ -25,6 +25,12 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 6px;b
 .ct a{display:inline-block;padding:11px 16px;border-radius:10px;font-weight:700;text-decoration:none;font-size:15px}.ct a.w{background:#25D366;color:#fff}.ct a.t{background:var(--ink);color:#fff}.ct a.m{background:var(--soft);color:var(--ink)}
 .small{font-size:12px;color:var(--mute);margin-top:16px;line-height:1.5}
 .err{background:#fff;border-radius:14px;padding:24px;text-align:center}
+.ctl{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.lb{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;font-size:15px;cursor:pointer}.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hint{display:block;font-size:12px;color:var(--mute);margin-top:6px}
+.dw input{width:130px;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:9px}
+.opts{border:1px dashed #C9CBD0;border-radius:10px;padding:8px 10px}.opt{display:flex;gap:8px;align-items:center;font-size:14px;padding:4px 0}.opt input{width:20px;height:20px}.opt b{margin-left:auto}
 </style></head>
 <body><header><img src="logo.png" alt="Biber Photovoltaik"><span style="color:var(--mute);font-size:13px">Ihr persönliches Angebot</span></header>
 <main id="m"></main>
@@ -41,29 +47,43 @@ async function decode() {
   let bytes; if (h[0] === 'z') { const st = new Blob([fromB64(h.slice(1))]).stream().pipeThrough(new DecompressionStream('deflate-raw')); bytes = new Uint8Array(await new Response(st).arrayBuffer()); } else bytes = fromB64(h[0] === 'j' ? h.slice(1) : h);
   const a = JSON.parse(new TextDecoder().decode(bytes));
   if (!Array.isArray(a)) return a;
-  const [, g, d, va, rec, t, cons, P] = a;
-  return { g: 'Sehr geehrte' + (/^Herr /.test(g) ? 'r ' : ' ') + g, d, va, rec, t, cons, f: CAT.f, p: P.map(q => ({ n: q[0], m: q[2] + ' × ' + nm('m', q[1]), i: nm('i', q[3]), b: q[4] ? q[5] + ' × ' + nm('b', q[4]) : '', x: (q[6] || []).map(id => nm('e', id)), a: q[7], s: q[8], y1: q[9], am: q[10] < 0 ? null : q[10] / 10, gn: q[11], ir: q[12] < 0 ? null : q[12] / 10, gr: q[13], ra: q[14], og: q[15], oc: q[16] ? q[16].split('+') : [], td: q[17], wp: q[18], kwp: q[19] / 100, kwh: q[20] / 10 })) };
+  const [, g, d, va, rec, t, cons, P, fin, down, stand] = a;
+  return { fin: fin || [[t, 5, 5.1]], down: down || 0, stand: stand || '', g: 'Sehr geehrte' + (/^Herr /.test(g) ? 'r ' : ' ') + g, d, va, rec, t, cons, f: CAT.f, p: P.map(q => ({ n: q[0], m: q[2] + ' × ' + nm('m', q[1]), i: nm('i', q[3]), b: q[4] ? q[5] + ' × ' + nm('b', q[4]) : '', x: (q[6] || []).map(id => nm('e', id)), a: q[7], s: q[8], y1: q[9], am: q[10] < 0 ? null : q[10] / 10, gn: q[11], ir: q[12] < 0 ? null : q[12] / 10, gr: q[13], ra: q[14], og: q[15], oc: q[16] ? q[16].split('+') : [], td: q[17], wp: q[18], kwp: q[19] / 100, kwh: q[20] / 10, oi: q[21] || (q[15] ? [[q[16] || 'Optionen', q[15]]] : []) })) };
 }
 (async () => { let D = null; try { D = await decode(); } catch (e) { }
 const m = document.getElementById('m');
 if (!D || !D.p) m.innerHTML = '<div class="err"><h1>Angebot nicht gefunden</h1><p class="sub">Bitte öffnen Sie den vollständigen Link aus unserer E-Mail.</p></div>';
 else {
-  const F = D.f || {};
-  m.innerHTML = `<h1>${esc(D.g)},</h1><p class="sub">hier finden Sie Ihre drei Varianten im direkten Vergleich – erstellt am ${esc(D.d)} für einen Strombedarf von rund ${nf(D.cons)} kWh im Jahr.</p>
+  const F = D.f || {}, S = { t: D.t, down: D.down, sel: D.p.map(p => (p.oi || []).map(() => false)) };
+  const ann = (L, nom, y) => { if (L <= 0) return 0; const r = nom / 1200, n = y * 12; return r ? L * r / (1 - Math.pow(1 + r, -n)) : L / n; };
+  const fin = () => D.fin.find(f => +f[0] === +S.t) || D.fin[0];
+  const tot = (p, i) => p.gr + (p.oi || []).reduce((s, o, j) => s + (S.sel[i][j] ? o[1] : 0), 0);
+  const rate = (p, i) => ann(tot(p, i) - S.down, fin()[1], S.t);
+  function draw() {
+    const f = fin();
+    m.innerHTML = `<h1>${esc(D.g)},</h1><p class="sub">hier finden Sie Ihre drei Varianten im direkten Vergleich – erstellt am ${esc(D.d)} für einen Strombedarf von rund ${nf(D.cons)} kWh im Jahr.</p>
    <div class="trust">${F.b ? `<div>€ ${esc(F.b)}</div>` : ''}${F.s ? `<div class="k">★ ${esc(F.s)}</div>` : ''}</div>
+   <section class="ctl"><div><span class="lb">Finanzierung – Laufzeit</span><div class="chips">${D.fin.map(x => `<button class="chip ${+x[0] === +S.t ? 'on' : ''}" data-t="${x[0]}">${x[0]} Jahre</button>`).join('')}</div><span class="hint">Sollzins ${nf(f[1], 2)} % · effektiv ${nf(f[2], 2)} % p. a.</span></div>
+    <div><span class="lb">Anzahlung</span><div class="dw"><input id="down" type="number" inputmode="numeric" min="0" step="500" value="${S.down}"> €</div></div></section>
    <div class="grid">${D.p.map((p, i) => `<article class="card ${i === D.rec ? 'rec' : ''}"><div class="ch" style="background:${COL[i]}"><b>${esc(p.n)}</b>${i === D.rec ? '<span class="badge">EMPFEHLUNG</span>' : ''}</div><div class="cb">
      <div class="kwp">${nf(p.kwp, 2)} kWp<small>${p.kwh ? 'mit ' + nf(p.kwh, 1) + ' kWh Batteriespeicher' : 'ohne Batteriespeicher'}</small></div>
      <ul><li>${esc(p.m)}</li><li>${esc(p.i)}</li>${p.b ? `<li>${esc(p.b)}</li>` : ''}${(p.x || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
      <div class="kp"><div><span>Autarkie</span><b>${p.a} %</b></div><div><span>Eigenverbrauch</span><b>${p.s} %</b></div><div><span>Ersparnis 1. Jahr</span><b>${eur(p.y1)}</b></div><div><span>Amortisation</span><b>${p.am === null ? '–' : nf(p.am, 1) + ' Jahre'}</b></div><div><span>Überschuss 20 Jahre</span><b>${eur(p.gn)}</b></div><div><span>Rendite p. a.</span><b>${p.ir === null ? '–' : nf(p.ir, 1) + ' %'}</b></div></div>
-     <div class="pr"><div class="r">Gesamtpreis (Endbetrag)</div><div class="v">${eur(p.gr)}</div><div class="r">oder ca. <b>${eur(p.ra)}</b> monatlich bei ${D.t} Jahren Finanzierung</div>${p.og ? `<div class="o">optional ${esc((p.oc || []).join(' + '))}: +${eur(p.og)} · gesamt ${eur(p.gr + p.og)}</div>` : ''}</div>
+     ${(p.oi || []).length ? `<div class="opts"><span class="lb">Optional dazu</span>${p.oi.map((o, j) => `<label class="opt"><input type="checkbox" data-o="${i}.${j}" ${S.sel[i][j] ? 'checked' : ''}> ${esc(o[0])} <b>+${eur(o[1])}</b></label>`).join('')}</div>` : ''}
+     <div class="pr"><div class="r">Gesamtpreis (Endbetrag)</div><div class="v">${eur(tot(p, i))}</div><div class="r">oder ca. <b>${eur(rate(p, i))}</b> monatlich bei ${S.t} Jahren${S.down ? ` und ${eur(S.down)} Anzahlung` : ''}</div></div>
    </div></article>`).join('')}</div>
    <section class="mon"><h2>Ihr Monat im Vergleich</h2><table><tr><th></th>${D.p.map((p, i) => `<th style="color:${COL[i]}">${esc(p.n)}</th>`).join('')}</tr>
     <tr><td>Stromkosten heute ohne PV</td>${D.p.map(p => `<td>${eur(p.td)}</td>`).join('')}</tr>
-    <tr><td>Mit PV finanziert (ca. Rate + laufende Kosten)</td>${D.p.map(p => `<td><b>${eur(p.ra + p.wp)}</b></td>`).join('')}</tr>
-    <tr><td>Nach der Finanzierung</td>${D.p.map(p => `<td>${eur(p.wp)}</td>`).join('')}</tr></table></section>
+    <tr><td>Mit PV finanziert (ca. Rate + laufende Kosten)</td>${D.p.map((p, i) => `<td><b>${eur(rate(p, i) + p.wp)}</b></td>`).join('')}</tr>
+    <tr><td>Nach der Finanzierung</td>${D.p.map(p => `<td>${eur(p.wp)}</td>`).join('')}</tr></table>
+    <p class="hint" style="margin-top:8px">Kennzahlen wie Autarkie, Amortisation und Rendite gelten für die Anlage ohne optionale Positionen.</p></section>
    <section class="ct">${F.n ? `<img src="foto.jpg" alt="">` : ''}<div><b style="font-size:17px">${esc(F.n || '')}</b><div style="color:var(--mute);font-size:14px">${esc(F.r || 'Ihr Ansprechpartner')} · Biber Photovoltaik GmbH</div>
      <div class="bt">${F.w ? `<a class="w" href="${esc(F.w)}">WhatsApp</a>` : ''}${F.p ? `<a class="t" href="tel:${esc(F.p.replace(/[^\d+]/g, ''))}">Anrufen</a>` : ''}${F.e ? `<a class="m" href="mailto:${esc(F.e)}">E-Mail</a>` : ''}</div></div></section>
-   <p class="small">Das ausführliche Angebot mit allen Positionen, Garantien und Datenblättern erhalten Sie als PDF per E-Mail. Angebot gültig ${D.va || 14} Tage ab ${esc(D.d)}. Biber Photovoltaik GmbH gibt mit diesen Daten eine Orientierung und keine Gewähr auf die Erträge, die vom Wetter und vom Verhalten des Kunden maßgeblich abweichen können. Finanzierung: Beispielraten, Bonität vorausgesetzt; maßgeblich ist das Vertragsangebot des Darlehensgebers.</p>`;
+   <p class="small">Das ausführliche Angebot mit allen Positionen, Garantien und Datenblättern erhalten Sie als PDF per E-Mail. Angebot gültig ${D.va || 14} Tage ab ${esc(D.d)}. Biber Photovoltaik GmbH gibt mit diesen Daten eine Orientierung und keine Gewähr auf die Erträge, die vom Wetter und vom Verhalten des Kunden maßgeblich abweichen können. Finanzierung: Beispielraten${D.stand ? ' (Konditionen Stand ' + esc(D.stand) + ')' : ''}, Sollzinsbindung = Gesamtlaufzeit, Bonität vorausgesetzt; maßgeblich ist das Vertragsangebot des Darlehensgebers.</p>`;
+  }
+  draw();
+  m.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) { S.t = +b.dataset.t; const y = scrollY; draw(); scrollTo(0, y); } });
+  m.addEventListener('change', e => { const t = e.target; if (t.id === 'down') { S.down = Math.max(0, Math.round(+t.value || 0)); const y = scrollY; draw(); scrollTo(0, y); } if (t.dataset.o) { const [i, j] = t.dataset.o.split('.').map(Number); S.sel[i][j] = t.checked; const y = scrollY; draw(); scrollTo(0, y); } });
 }
 })();
 </script></body></html>
