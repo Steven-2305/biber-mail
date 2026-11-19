@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
+<title>Ihr Solarangebot – Biber Photovoltaik</title><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--red:#BE000D;--ink:#1D1D1F;--mute:#6B6F76;--line:#E2E3E6;--soft:#F6F6F7;--ok:#1E7F4F}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;color:var(--ink);background:#F1F1F2}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}header img{height:34px}
+main{max-width:1100px;margin:0 auto;padding:20px}
+h1{font-size:26px;margin:6px 0 4px}.sub{color:var(--mute);margin:0 0 18px}
+.trust{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.trust div{background:#fff;border:2px solid var(--red);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px}.trust div.k{border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card.rec{border:2px solid var(--red);box-shadow:0 8px 24px #be000d22}
+.ch{padding:12px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center}.ch b{font-size:18px}.badge{background:#fff;color:var(--red);font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px}
+.cb{padding:14px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.kwp{font-size:26px;font-weight:800}.kwp small{font-size:13px;color:var(--mute);font-weight:500;display:block}
+ul{margin:0;padding-left:18px;font-size:14px;line-height:1.5}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kp div{background:var(--soft);border-radius:8px;padding:7px 9px}.kp span{font-size:11px;color:var(--mute);display:block}.kp b{font-size:16px}
+.pr{border-top:1px solid var(--line);padding-top:10px}.pr .v{font-size:24px;font-weight:800}.pr .r{color:var(--mute);font-size:14px}.pr .o{font-size:13px;color:var(--mute);margin-top:4px}
+.mon{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+.mon h2,.ct h2{font-size:17px;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}td:first-child,th:first-child{text-align:left}
+.ct{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ct img{width:84px;height:84px;border-radius:50%;object-fit:cover}.ct .bt{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ct a{display:inline-block;padding:11px 16px;border-radius:10px;font-weight:700;text-decoration:none;font-size:15px}.ct a.w{background:#25D366;color:#fff}.ct a.t{background:var(--ink);color:#fff}.ct a.m{background:var(--soft);color:var(--ink)}
+.small{font-size:12px;color:var(--mute);margin-top:16px;line-height:1.5}
+.err{background:#fff;border-radius:14px;padding:24px;text-align:center}
+</style></head>
+<body><header><img src="logo.png" alt="Biber Photovoltaik"><span style="color:var(--mute);font-size:13px">Ihr persönliches Angebot</span></header>
+<main id="m"></main>
+<script>
+const COL = ['#7D828B', '#BE000D', '#1D1D1F'];
+const nf = (v, d = 0) => (isFinite(v) ? v : 0).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
+const eur = v => nf(v) + ' €';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let D = null;
+try { let h = location.hash.slice(1).replace(/-/g, '+').replace(/_/g, '/'); while (h.length % 4) h += '='; const b = atob(h); D = JSON.parse(new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0)))); } catch (e) { }
+const m = document.getElementById('m');
+if (!D || !D.p) m.innerHTML = '<div class="err"><h1>Angebot nicht gefunden</h1><p class="sub">Bitte öffnen Sie den vollständigen Link aus unserer E-Mail.</p></div>';
+else {
+  const F = D.f || {};
+  m.innerHTML = `<h1>${esc(D.g)},</h1><p class="sub">hier finden Sie Ihre drei Varianten im direkten Vergleich – erstellt am ${esc(D.d)} für einen Strombedarf von rund ${nf(D.cons)} kWh im Jahr.</p>
+   <div class="trust">${F.b ? `<div>€ ${esc(F.b)}</div>` : ''}${F.s ? `<div class="k">★ ${esc(F.s)}</div>` : ''}</div>
+   <div class="grid">${D.p.map((p, i) => `<article class="card ${i === D.rec ? 'rec' : ''}"><div class="ch" style="background:${COL[i]}"><b>${esc(p.n)}</b>${i === D.rec ? '<span class="badge">EMPFEHLUNG</span>' : ''}</div><div class="cb">
+     <div class="kwp">${nf(p.kwp, 2)} kWp<small>${p.kwh ? 'mit ' + nf(p.kwh, 1) + ' kWh Batteriespeicher' : 'ohne Batteriespeicher'}</small></div>
+     <ul><li>${esc(p.m)}</li><li>${esc(p.i)}</li>${p.b ? `<li>${esc(p.b)}</li>` : ''}${(p.x || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+     <div class="kp"><div><span>Autarkie</span><b>${p.a} %</b></div><div><span>Eigenverbrauch</span><b>${p.s} %</b></div><div><span>Ersparnis 1. Jahr</span><b>${eur(p.y1)}</b></div><div><span>Amortisation</span><b>${p.am === null ? '–' : nf(p.am, 1) + ' Jahre'}</b></div><div><span>Überschuss 20 Jahre</span><b>${eur(p.gn)}</b></div><div><span>Rendite p. a.</span><b>${p.ir === null ? '–' : nf(p.ir, 1) + ' %'}</b></div></div>
+     <div class="pr"><div class="r">Gesamtpreis (Endbetrag)</div><div class="v">${eur(p.gr)}</div><div class="r">oder ca. <b>${eur(p.ra)}</b> monatlich bei ${D.t} Jahren Finanzierung</div>${p.og ? `<div class="o">optional ${esc((p.oc || []).join(' + '))}: +${eur(p.og)} · gesamt ${eur(p.gr + p.og)}</div>` : ''}</div>
+   </div></article>`).join('')}</div>
+   <section class="mon"><h2>Ihr Monat im Vergleich</h2><table><tr><th></th>${D.p.map((p, i) => `<th style="color:${COL[i]}">${esc(p.n)}</th>`).join('')}</tr>
+    <tr><td>Stromkosten heute ohne PV</td>${D.p.map(p => `<td>${eur(p.td)}</td>`).join('')}</tr>
+    <tr><td>Mit PV finanziert (ca. Rate + laufende Kosten)</td>${D.p.map(p => `<td><b>${eur(p.ra + p.wp)}</b></td>`).join('')}</tr>
+    <tr><td>Nach der Finanzierung</td>${D.p.map(p => `<td>${eur(p.wp)}</td>`).join('')}</tr></table></section>
+   <section class="ct">${F.n ? `<img src="foto.jpg" alt="">` : ''}<div><b style="font-size:17px">${esc(F.n || '')}</b><div style="color:var(--mute);font-size:14px">${esc(F.r || 'Ihr Ansprechpartner')} · Biber Photovoltaik GmbH</div>
+     <div class="bt">${F.w ? `<a class="w" href="${esc(F.w)}">WhatsApp</a>` : ''}${F.p ? `<a class="t" href="tel:${esc(F.p.replace(/[^\d+]/g, ''))}">Anrufen</a>` : ''}${F.e ? `<a class="m" href="mailto:${esc(F.e)}">E-Mail</a>` : ''}</div></div></section>
+   <p class="small">Das ausführliche Angebot mit allen Positionen, Garantien und Datenblättern erhalten Sie als PDF per E-Mail. Angebot gültig ${D.va || 14} Tage ab ${esc(D.d)}. Biber Photovoltaik GmbH gibt mit diesen Daten eine Orientierung und keine Gewähr auf die Erträge, die vom Wetter und vom Verhalten des Kunden maßgeblich abweichen können. Finanzierung: Beispielraten, Bonität vorausgesetzt; maßgeblich ist das Vertragsangebot des Darlehensgebers.</p>`;
+}
+</script></body></html>
