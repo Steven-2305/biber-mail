@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer-when-downgrade">
+<title>Dach & Anfahrt – Biber PV</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;color:#1d1d1f;background:#f4f4f5}
+.top{position:fixed;left:0;right:0;top:0;z-index:5;background:#fff;border-bottom:1px solid #e4e4e7;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.ad{font-weight:700;font-size:16px;flex:1 1 260px}.ad small{display:block;font-weight:400;color:#666;font-size:13px;margin-top:2px}
+.dist{font-size:15px;background:#F5F8FF;color:#1D3A72;border-radius:10px;padding:8px 12px;font-weight:600}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.b{border:1px solid #d4d4d8;background:#fff;color:#1d1d1f;border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;text-decoration:none;cursor:pointer}
+.b.on{background:#1d1d1f;color:#fff;border-color:#1d1d1f}.b.r{background:#BE000D;border-color:#BE000D;color:#fff}
+iframe{position:fixed;left:0;right:0;bottom:0;width:100%;border:0}
+.err{padding:120px 20px;text-align:center}
+</style></head><body>
+<div class="top"><div class="ad" id="ad"></div><div class="dist" id="dist">Anfahrt wird berechnet …</div>
+<div class="btns"><button class="b on" data-t="k">Satellit</button><button class="b" data-t="m">Karte</button><a class="b" id="gm" target="_blank" rel="noopener">Google Maps</a><a class="b r" id="nav" target="_blank" rel="noopener">Navigation</a></div></div>
+<iframe id="map" allowfullscreen loading="eager" referrerpolicy="no-referrer-when-downgrade"></iframe>
+<script>
+let P = {}; try { P = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) {}
+const A = (P.a || '').trim(), O = (P.o || 'Vor dem Hagen 6, 38557 Osloß').trim(), N = P.n || '';
+const top_ = document.querySelector('.top'), map = document.getElementById('map');
+if (!A) { document.body.innerHTML = '<div class="err">Keine Adresse übergeben.</div>'; }
+else {
+  document.getElementById('ad').innerHTML = (N ? N + '<small>' : '') + A.replace(/</g, '&lt;') + (N ? '</small>' : '');
+  document.title = 'Dach: ' + A;
+  const q = encodeURIComponent(A);
+  document.getElementById('gm').href = 'https://www.google.com/maps/search/?api=1&query=' + q;
+  document.getElementById('nav').href = 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(O) + '&destination=' + q + '&travelmode=driving';
+  let t = 'k';
+  const draw = () => { map.src = 'https://maps.google.com/maps?q=' + q + '&t=' + t + '&z=' + (t === 'k' ? 20 : 16) + '&hl=de&output=embed'; };
+  const fit = () => { const h = top_.offsetHeight; map.style.top = h + 'px'; map.style.height = (innerHeight - h) + 'px'; };
+  addEventListener('resize', fit); fit(); draw();
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { t = b.dataset.t; document.querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === b)); draw(); });
+  const geo = s => fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&q=' + encodeURIComponent(s)).then(r => r.json()).then(j => j[0] ? [+j[0].lon, +j[0].lat] : null);
+  const D = document.getElementById('dist');
+  Promise.all([geo(O), geo(A)]).then(([a, b]) => {
+    if (!a || !b) throw 0;
+    return fetch(`https://router.project-osrm.org/route/v1/driving/${a[0]},${a[1]};${b[0]},${b[1]}?overview=false`).then(r => r.json()).then(j => {
+      const r = j.routes && j.routes[0]; if (!r) throw 0;
+      const km = r.distance / 1000, min = Math.round(r.duration / 60);
+      D.textContent = `Anfahrt ab ${O.split(',').pop().trim().replace(/^\d+\s*/, '')}: ca. ${km.toLocaleString('de-DE', { maximumFractionDigits: km < 10 ? 1 : 0 })} km · ca. ${min >= 60 ? Math.floor(min / 60) + ' Std. ' + (min % 60) + ' Min.' : min + ' Min.'}`;
+      fit();
+    });
+  }).catch(() => { D.textContent = 'Anfahrt: über „Navigation“ anzeigen'; fit(); });
+}
+</script></body></html>
