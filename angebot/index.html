@@ -33,8 +33,18 @@ const COL = ['#7D828B', '#BE000D', '#1D1D1F'];
 const nf = (v, d = 0) => (isFinite(v) ? v : 0).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
 const eur = v => nf(v) + ' €';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let D = null;
-try { let h = location.hash.slice(1).replace(/-/g, '+').replace(/_/g, '/'); while (h.length % 4) h += '='; const b = atob(h); D = JSON.parse(new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0)))); } catch (e) { }
+const CAT = {"cat": {"m": {"m460": "Solarfabrik Mono S4 Halfcut Trend Full Black 460W", "m480": "Solarfabrik Mono S4 BC 480W Full Black – Limited Edition"}, "i": {"a6": "Alpha SMILE-G3-T6 Hybrid Wechselrichter", "a8": "Alpha SMILE-G3-T8 Hybrid Wechselrichter", "a10": "Alpha SMILE-G3-T10 Hybrid Wechselrichter", "a15": "Alpha SMILE-G3-T15 Hybrid Wechselrichter", "a20": "Alpha SMILE-G3-T20 Hybrid Wechselrichter", "k4": "Kostal Plenticore S G3 4,0 kW", "k85": "Kostal Plenticore M G3 8,5 kW", "kp10": "Kostal PLENTICORE plus 10", "k15": "Kostal Plenticore L G3 15 kW", "f12": "Hybridwechselrichter FOXESS H3-12.0-E WIFI", "fr125": "FRONIUS SYMO 12.5-3-M"}, "b": {"a38": "Alpha SMILE-G3-BAT-3.8S", "a93": "AlphaESS SMILE-G3-BAT-9.3S", "dyn": "Dyness HV9640 Batteriemodul 3,84 kWh", "byd": "BYD Battery-Box Batteriemodul HVS+ 2,56 kWh", "sma": "SMA Home Storage 3.2 kWh Batteriespeicher"}, "e": {"wbA": "Alpha-ESS SMILE-G3-EVCT11 Wallbox", "wbAk": "Alpha-ESS SMILE-G3-EVCT11 Ladekabel", "wbE": "EVBox Elvi 11kW schwarz", "rfid": "Fronius Wattpilot RFID Tags", "wbM": "Montage/Installation einer Wallbox", "kw25": "Wallbox Kabelweg ab 15 m bis 25 m", "kw35": "Wallbox Kabelweg ab 26 m bis 35 m", "bbA": "Alpha Backup Box Plus", "nuK": "Enwitec Netzumschaltbox Kostal Plenticore G3 (D/CH)", "bsK": "KOSTAL BackUp Switch G3", "zs2": "Zählerschrank (2-Feld), alter bleibt Unterverteilung", "zs3": "Neuer Zählerschrank (3-Feld), alter bleibt Unterverteilung", "kv3": "Kleinverteiler 3-reihig", "spg": "Spezialgerüst Pauschalbetrag je Dachseite"}}, "f": {"n": "Steven Jentschke", "r": "Ihr PV-Fachberater vor Ort", "p": "05362 9752550", "e": "jentschke@biber-pv.de", "w": "https://wa.me/message/LOAQJFKYLLIIA1?src=qr", "b": "Unser Best-Preis-Versprechen", "s": "Seit über 20 Jahren Ihr Photovoltaik-Partner"}};
+const nm = (t, id) => (CAT.cat[t] && CAT.cat[t][id]) || id;
+function fromB64(h) { h = h.replace(/-/g, '+').replace(/_/g, '/'); while (h.length % 4) h += '='; return Uint8Array.from(atob(h), c => c.charCodeAt(0)); }
+async function decode() {
+  const h = location.hash.slice(1); if (!h) return null;
+  let bytes; if (h[0] === 'z') { const st = new Blob([fromB64(h.slice(1))]).stream().pipeThrough(new DecompressionStream('deflate-raw')); bytes = new Uint8Array(await new Response(st).arrayBuffer()); } else bytes = fromB64(h[0] === 'j' ? h.slice(1) : h);
+  const a = JSON.parse(new TextDecoder().decode(bytes));
+  if (!Array.isArray(a)) return a;
+  const [, g, d, va, rec, t, cons, P] = a;
+  return { g: 'Sehr geehrte' + (/^Herr /.test(g) ? 'r ' : ' ') + g, d, va, rec, t, cons, f: CAT.f, p: P.map(q => ({ n: q[0], m: q[2] + ' × ' + nm('m', q[1]), i: nm('i', q[3]), b: q[4] ? q[5] + ' × ' + nm('b', q[4]) : '', x: (q[6] || []).map(id => nm('e', id)), a: q[7], s: q[8], y1: q[9], am: q[10] < 0 ? null : q[10] / 10, gn: q[11], ir: q[12] < 0 ? null : q[12] / 10, gr: q[13], ra: q[14], og: q[15], oc: q[16] ? q[16].split('+') : [], td: q[17], wp: q[18], kwp: q[19] / 100, kwh: q[20] / 10 })) };
+}
+(async () => { let D = null; try { D = await decode(); } catch (e) { }
 const m = document.getElementById('m');
 if (!D || !D.p) m.innerHTML = '<div class="err"><h1>Angebot nicht gefunden</h1><p class="sub">Bitte öffnen Sie den vollständigen Link aus unserer E-Mail.</p></div>';
 else {
@@ -55,4 +65,5 @@ else {
      <div class="bt">${F.w ? `<a class="w" href="${esc(F.w)}">WhatsApp</a>` : ''}${F.p ? `<a class="t" href="tel:${esc(F.p.replace(/[^\d+]/g, ''))}">Anrufen</a>` : ''}${F.e ? `<a class="m" href="mailto:${esc(F.e)}">E-Mail</a>` : ''}</div></div></section>
    <p class="small">Das ausführliche Angebot mit allen Positionen, Garantien und Datenblättern erhalten Sie als PDF per E-Mail. Angebot gültig ${D.va || 14} Tage ab ${esc(D.d)}. Biber Photovoltaik GmbH gibt mit diesen Daten eine Orientierung und keine Gewähr auf die Erträge, die vom Wetter und vom Verhalten des Kunden maßgeblich abweichen können. Finanzierung: Beispielraten, Bonität vorausgesetzt; maßgeblich ist das Vertragsangebot des Darlehensgebers.</p>`;
 }
+})();
 </script></body></html>
