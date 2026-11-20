@@ -81,7 +81,7 @@ def main(lat, lon, img, out):
         m = np.zeros((H, W), bool); rr, cc = skd.polygon([p[1] for p in poly_px], [p[0] for p in poly_px], (H, W)); m[rr, cc] = True; return m
     im0 = im; ov = Image.new('RGBA', im.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
     px = lambda x, y: ((x - (X - SPAN / 2)) / SPAN * W, ((Y + SPAN * H / W / 2) - y) / (SPAN * H / W) * H)
-    faces = []; allpx = []
+    faces = []; allpx = []; MODS = []; OBSQ = []
     for P in roofs:
         if len(P) < 4: continue
         P = P[:-1] if np.allclose(P[0], P[-1]) else P
@@ -104,6 +104,18 @@ def main(lat, lon, img, out):
                 if rp.area * mpp * mpp > 15: obs[lab == rp.label] = False   # große Flächen = Schatten/Farbverlauf, keine Störfläche
             obs = morphology.binary_dilation(obs, morphology.disk(int(0.2 / mpp)))
         OBS |= obs
+        if obs.any() and not flat:
+            from skimage import measure as _ms
+            inv = lambda c_, r_: ((X - SPAN / 2) + c_ / W * SPAN, (Y + SPAN * H / W / 2) - r_ / H * (SPAN * H / W))
+            for rp in _ms.regionprops(_ms.label(obs)):
+                pts_ = []
+                for (r_, c_) in rp.coords[::max(1, len(rp.coords) // 400)]:
+                    x_, y_ = inv(c_, r_); z_ = o[2] - (n[0] * (x_ - o[0]) + n[1] * (y_ - o[1])) / n[2]
+                    pts_.append(((np.array([x_, y_, z_]) - o) @ u, (np.array([x_, y_, z_]) - o) @ v))
+                a_ = np.array(pts_); sh_ = 0.2
+                (a0, b0), (a1, b1) = a_.min(0) + sh_, a_.max(0) - sh_
+                if a1 - a0 > 0.25 and b1 - b0 > 0.25:
+                    OBSQ.append([[float(t) for t in (o + u * aa + v * bb + n * 0.05)] for aa, bb in [(a0, b0), (a1, b0), (a1, b1), (a0, b1)]])
         def okf(x, y, w, h, o=o, u=u, v=v, obs=obs):
             cs = [o + u * a + v * b for a, b in [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]]
             pp = [px(c[0], c[1]) for c in cs]; rr, cc = skd.polygon([p[1] for p in pp], [p[0] for p in pp], (H, W))
@@ -116,7 +128,7 @@ def main(lat, lon, img, out):
         if len(best) < 3: continue
         for (x, y) in best:
             cs = [o + u * a + v * b for a, b in [(x, y), (x + bw, y), (x + bw, y + bh), (x, y + bh)]]
-            allpx += [px(c[0], c[1]) for c in cs]
+            allpx += [px(c[0], c[1]) for c in cs]; MODS.append({'c': [[float(v) for v in (c + n * 0.12)] for c in cs], 'n': [float(v) for v in n], 'nord': bool(not flat and ori(az) == 'N'), 'o': 'S' if flat else ori(az), 'flat': bool(flat)})
             nord = not flat and ori(az) == 'N'
             d.polygon([px(c[0], c[1]) for c in cs], fill=(70, 80, 100, 140) if nord else (20, 30, 60, 210), outline=(235, 240, 255, 200 if nord else 255))
         faces.append({'o': 'flach' if flat else ori(az), 'az': round(az), 'tilt': round(tilt), 'n': len(best), 'm2': round(q.area, 1), 'obs': int(obs.sum() * mpp * mpp * 10) / 10})
@@ -138,6 +150,7 @@ def main(lat, lon, img, out):
     agg = {}
     for x in faces:
         k = 'S' if x['o'] == 'flach' else x['o']; agg[k] = agg.get(k, 0) + x['n']
+    if os.environ.get('ROOF_MODS'): json.dump({'obs': OBSQ, 'mods': MODS, 'bid': bid, 'X': X, 'Y': Y}, open(os.environ['ROOF_MODS'], 'w'))
     return {'ok': True, 'total': tot, 'faces': faces, 'byOri': agg, 'flat': any(x['o'] == 'flach' for x in faces), 'bid': bid}
 if __name__ == '__main__':
     print(json.dumps(main(float(sys.argv[1]), float(sys.argv[2]), sys.argv[3], sys.argv[4]), ensure_ascii=False))
