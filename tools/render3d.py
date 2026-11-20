@@ -26,18 +26,22 @@ def surfaces(gml):
 def tris(P):
     P = P[:-1] if np.allclose(P[0], P[-1]) else P
     if len(P) < 3: return []
-    n = np.cross(P[1] - P[0], P[2] - P[0]); i = 2
-    while np.linalg.norm(n) < 1e-9 and i < len(P) - 1: i += 1; n = np.cross(P[1] - P[0], P[i] - P[0])
+    # Newell-Normale: robust auch bei (fast) kollinearen ersten Punkten
+    c0 = P.mean(0); Q = P - c0; n = np.zeros(3)
+    for i in range(len(Q)):
+        a, b = Q[i], Q[(i + 1) % len(Q)]; n += [(a[1] - b[1]) * (a[2] + b[2]), (a[2] - b[2]) * (a[0] + b[0]), (a[0] - b[0]) * (a[1] + b[1])]
     if np.linalg.norm(n) < 1e-9: return []
-    n /= np.linalg.norm(n); u = P[1] - P[0]; u /= np.linalg.norm(u); v = np.cross(n, u)
-    q = [((p - P[0]) @ u, (p - P[0]) @ v) for p in P]
-    if len(P) == 3: return [P]
+    n /= np.linalg.norm(n)
+    u = np.cross([0, 0, 1.0], n)
+    if np.linalg.norm(u) < 1e-6: u = np.array([1.0, 0, 0])
+    u /= np.linalg.norm(u); v = np.cross(n, u)
+    q = [(p @ u, p @ v) for p in Q]
     poly = Polygon(q).buffer(0)
     if poly.is_empty: return []
     out = []
     for t in triangulate(poly):
         if poly.contains(t.representative_point()):
-            out.append(np.array([P[0] + u * a + v * b for a, b in list(t.exterior.coords)[:3]]))
+            out.append(np.array([c0 + u * a + v * b for a, b in list(t.exterior.coords)[:3]]))
     return out
 def main(lat, lon, raw, modsf, out):
     M = json.load(open(modsf)); X, Y, bid = M['X'], M['Y'], M['bid']

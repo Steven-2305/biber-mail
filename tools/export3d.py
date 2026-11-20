@@ -37,6 +37,23 @@ def main(lat, lon, raw, modsf, out):
     for i, m in enumerate(M['mods']):
         mods.append({'c': loc([x for p in m['c'] for x in p]), 'o': 'N' if m['nord'] else m.get('o', 'S')})
     obs = [loc([x for p in q for x in p]) for q in M.get('obs', [])]
+    # Selbstprüfung: jedes Modul muss knapp ÜBER einer Dachfläche des Hauses liegen
+    me = [b for b in blds if b['me']][0]; planes = []
+    for f in me['r']:
+        v = np.array(f['v']).reshape(-1, 3, 3)
+        for T in v:
+            n = np.cross(T[1] - T[0], T[2] - T[0]); 
+            if np.linalg.norm(n) < 1e-9: continue
+            n = n / np.linalg.norm(n) * np.sign(n[2] or 1); planes.append((T, n))
+    from shapely.geometry import Polygon as _P, Point as _Pt
+    bad = 0
+    for m in mods:
+        c = np.array(m['c']).reshape(-1, 3).mean(0); best = None
+        for T, n in planes:
+            if _P(T[:, :2]).buffer(0.05).contains(_Pt(c[0], c[1])):
+                d_ = float((c - T[0]) @ n); best = d_ if best is None or abs(d_ - 0.12) < abs(best - 0.12) else best
+        if best is None or not (0.0 <= best <= 0.3): bad += 1
+    if bad: raise SystemExit(f'Prüfung fehlgeschlagen: {bad} Module liegen nicht auf dem Dach')
     json.dump({'v': 1, 'b': blds, 'm': mods, 'obs': obs, 'g': [SPAN, SPAN * IH / IW]}, open(out, 'w'), separators=(',', ':'))
 if __name__ == '__main__':
     main(float(sys.argv[1]), float(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5])
