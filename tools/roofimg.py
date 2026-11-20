@@ -20,7 +20,7 @@ def render(lat, lon, state, out, W=1000, H=700, span=70):
     p = {'SERVICE': 'WMS', 'VERSION': '1.3.0', 'REQUEST': 'GetMap', 'LAYERS': layer, 'STYLES': '', 'CRS': 'EPSG:3857', 'BBOX': f'{x-hw},{y-hh},{x+hw},{y+hh}', 'WIDTH': W, 'HEIGHT': H, 'FORMAT': 'image/jpeg'}
     r = get(url + '?' + urllib.parse.urlencode(p), 60); data = r.read()
     if not r.headers.get('Content-Type', '').startswith('image'): return {'ok': False, 'err': 'Luftbild-Dienst liefert gerade kein Bild (Wartung?)', 'state': state}
-    im = Image.open(io.BytesIO(data)).convert('RGB'); d = ImageDraw.Draw(im); cx, cy = W // 2, H // 2
+    im = Image.open(io.BytesIO(data)).convert('RGB'); im.save(out[:-4] + '.raw.jpg', 'JPEG', quality=90); d = ImageDraw.Draw(im); cx, cy = W // 2, H // 2
     d.ellipse([cx-11, cy-30, cx+11, cy-8], fill=(190, 0, 13), outline='white', width=2); d.polygon([(cx-8, cy-14), (cx+8, cy-14), (cx, cy)], fill=(190, 0, 13)); d.ellipse([cx-4, cy-23, cx+4, cy-15], fill='white')
     try: f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 13)
     except Exception: f = ImageFont.load_default()
@@ -45,6 +45,7 @@ def render_ni(lat, lon, out, W=1000, H=700, span=70):
     im = Image.fromarray(np.moveaxis(arr[:3], 0, -1).astype('uint8')).resize((W, H), Image.LANCZOS)
     return finish(im, out, f'© LGLN {last[:4]}, dl-de/by-2-0', W, H, {'state': 'Niedersachsen', 'lat': lat, 'lon': lon, 'date': last[:10]})
 def finish(im, out, attr, W, H, meta):
+    im.save(out[:-4] + '.raw.jpg', 'JPEG', quality=90)
     d = ImageDraw.Draw(im); cx, cy = W // 2, H // 2
     d.ellipse([cx-11, cy-30, cx+11, cy-8], fill=(190, 0, 13), outline='white', width=2); d.polygon([(cx-8, cy-14), (cx+8, cy-14), (cx, cy)], fill=(190, 0, 13)); d.ellipse([cx-4, cy-23, cx+4, cy-15], fill='white')
     try: f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 13)
