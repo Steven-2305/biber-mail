@@ -10,7 +10,7 @@ from shapely.ops import unary_union
 from pyproj import Transformer
 from PIL import Image, ImageDraw, ImageFont
 from skimage import color, draw as skd, morphology
-MPP = SPAN_DEFAULT = None
+TH = float(os.environ.get('ROOF_TH', 9)); LT = float(os.environ.get('ROOF_LT', 5))
 NS = {'gml': 'http://www.opengis.net/gml', 'bldg': 'http://www.opengis.net/citygml/building/2.0'}
 MOD = (1.134, 1.80)          # Modulbreite x -länge (m), konservativ (passt für 460 W und 480 W)
 EDGE, GAP = 0.30, 0.02        # Randabstand zu Traufe/First/Ortgang, Modulfuge
@@ -68,8 +68,15 @@ def main(lat, lon, img, out):
             if dist < 12: cand.append((dist, -fp.area, bid, roofs))
     if not cand: return {'ok': False, 'err': 'kein Gebäude im 3D-Modell gefunden'}
     cand.sort(key=lambda c: (c[0], c[1])); _, _, bid, roofs = cand[0]
+    if os.environ.get('ROOF_MERGE'):
+        fp0 = unary_union([Polygon(r[:, :2]).buffer(0) for r in roofs if len(r) >= 3]).buffer(0.3)
+        for c in cand[1:]:
+            if unary_union([Polygon(r[:, :2]).buffer(0) for r in c[3] if len(r) >= 3]).intersects(fp0): roofs = roofs + c[3]
     raw = img[:-4] + '.raw.jpg'; A = color.rgb2lab(np.asarray(Image.open(raw if os.path.exists(raw) else img).convert('RGB')) / 255.0); im = Image.open(img).convert('RGB'); mpp = SPAN / W
     OBS = np.zeros((H, W), bool)
+    from scipy import ndimage as ndi
+    k = max(9, int(2.5 / mpp) | 1); LOC = np.stack([ndi.median_filter(A[..., i], size=k) for i in range(3)], -1)
+    DL = np.linalg.norm((A - LOC) * [1.0, 0.7, 0.7], axis=2)
     def facemask(poly_px):
         m = np.zeros((H, W), bool); rr, cc = skd.polygon([p[1] for p in poly_px], [p[0] for p in poly_px], (H, W)); m[rr, cc] = True; return m
     im0 = im; ov = Image.new('RGBA', im.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
@@ -87,8 +94,8 @@ def main(lat, lon, img, out):
         obs = np.zeros_like(core)
         if core.sum() > 200:
             med = np.median(A[core], axis=0); dist = np.linalg.norm(A - med, axis=2)
-            thr = max(16.0, np.percentile(dist[core], 80) * 2.2)
-            obs = core & (dist > thr)
+            thr = max(TH, np.percentile(dist[core], 60) * 2.0)
+            obs = core & ((dist > thr) | (DL > max(LT, np.percentile(DL[core], 70) * 2.5)))
             obs = morphology.binary_opening(obs, morphology.disk(2))
             obs = morphology.remove_small_objects(obs, int((0.35 / mpp) ** 2))
             from skimage import measure
