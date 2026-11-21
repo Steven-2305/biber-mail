@@ -25,7 +25,7 @@ def render(lat, lon, state, out, W=1000, H=700, span=70):
     try: f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 13)
     except Exception: f = ImageFont.load_default()
     tw = d.textlength(attr, font=f); d.rectangle([W-tw-12, H-22, W, H], fill='white'); d.text((W-tw-6, H-19), attr, fill=(60, 60, 60), font=f)
-    im.save(out, 'JPEG', quality=70, optimize=True); return {'ok': True, 'src': attr, 'state': state, 'lat': lat, 'lon': lon}
+    im.save(out, 'JPEG', quality=88, optimize=True); return {'ok': True, 'src': attr, 'state': state, 'lat': lat, 'lon': lon}
 
 def render_ni(lat, lon, out, W=1000, H=700, span=70):
     import rasterio, numpy as np
@@ -46,12 +46,14 @@ def render_ni(lat, lon, out, W=1000, H=700, span=70):
     return finish(im, out, f'© LGLN {last[:4]}, dl-de/by-2-0', W, H, {'state': 'Niedersachsen', 'lat': lat, 'lon': lon, 'date': last[:10]})
 def finish(im, out, attr, W, H, meta):
     im.save(out[:-4] + '.raw.jpg', 'JPEG', quality=90)
+    from PIL import ImageFilter
+    im = im.filter(ImageFilter.UnsharpMask(radius=2.2, percent=90, threshold=2))
     d = ImageDraw.Draw(im); cx, cy = W // 2, H // 2
     d.ellipse([cx-11, cy-30, cx+11, cy-8], fill=(190, 0, 13), outline='white', width=2); d.polygon([(cx-8, cy-14), (cx+8, cy-14), (cx, cy)], fill=(190, 0, 13)); d.ellipse([cx-4, cy-23, cx+4, cy-15], fill='white')
     try: f = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 13)
     except Exception: f = ImageFont.load_default()
     tw = d.textlength(attr, font=f); d.rectangle([W-tw-12, H-22, W, H], fill='white'); d.text((W-tw-6, H-19), attr, fill=(60, 60, 60), font=f)
-    im.save(out, 'JPEG', quality=70, optimize=True); return {'ok': True, 'src': attr, **meta}
+    im.save(out, 'JPEG', quality=88, optimize=True); return {'ok': True, 'src': attr, **meta}
 
 if __name__ == '__main__':
     g = geocode(sys.argv[1])

@@ -148,7 +148,7 @@ def main(lat, lon, img, out):
     except Exception: f = ImageFont.load_default()
     t = f'Mögliche Belegung (Schätzung): ca. {tot} Module'; tw = dd.textlength(t, font=f)
     dd.rounded_rectangle([10, 10, 30 + tw, 44], 8, fill=(190, 0, 13)); dd.text((20, 16), t, fill='white', font=f)
-    im.save(out, 'JPEG', quality=72, optimize=True)
+    im.save(out, 'JPEG', quality=86, optimize=True)
     used = {x['o'] for x in faces if x['o'] != 'flach'}
     fk = next((k for k in ['O', 'W', 'S', 'N'] if k not in used), 'S')   # Flachdach (Ost-West) in eine freie Rechner-Spalte
     for m in MODS:
