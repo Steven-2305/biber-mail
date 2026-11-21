@@ -48,6 +48,7 @@ button.mrow{cursor:pointer}.mrow.sel{background:#FFF1F0}.mrow.sel .ml{font-weigh
 .mbd{font-size:11.5px;color:#666;margin-top:3px;line-height:1.35}.mrow.sel .mbd{color:#333}
 .m1 span{font-style:normal}.mbar i{font-style:normal}
 @media(max-width:640px){.mrow{grid-template-columns:1fr auto auto!important;row-gap:4px}.mrow .mbw,.mrow>.mbar{grid-column:1/-1;order:5}.mrow em{grid-column:auto!important}.ml small{display:inline!important;margin-left:4px}}
+.kp .big{grid-column:span 1;background:#F4F7FB}.kp .big small{display:block;font-size:11px;color:#777;margin-top:2px}.kp .big.g{background:#EAF6EE}.kp .big.g b{color:#0A7D3B}
 </style></head>
 <body><header><img src="logo.png" alt="Biber Photovoltaik"><span style="color:var(--mute);font-size:13px">Ihr persönliches Angebot</span></header>
 <main id="m"></main>
@@ -89,7 +90,8 @@ else {
    <div class="grid">${D.p.map((p, i) => `<article class="card ${i === D.rec ? 'rec' : ''}"><div class="ch" style="background:${COL[i]}"><b>${esc(p.n)}</b>${i === D.rec ? '<span class="badge">EMPFEHLUNG</span>' : ''}</div><div class="cb">
      <div class="kwp">${nf(p.kwp, 2)} kWp<small>${p.kwh ? 'mit ' + nf(p.kwh, 1) + ' kWh Batteriespeicher' : 'ohne Batteriespeicher'}</small></div>
      <ul><li>${esc(p.m)}</li><li>${esc(p.i)}</li>${p.b ? `<li>${esc(p.b)}</li>` : ''}${(p.x || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-     <div class="kp"><div><span>Autarkie</span><b>${p.a} %</b></div><div><span>Eigenverbrauch</span><b>${p.s} %</b></div><div><span>Ersparnis 1. Jahr</span><b>${eur(p.y1)}</b></div><div><span>Amortisation</span><b>${p.am === null ? '–' : nf(p.am, 1) + ' Jahre'}</b></div><div><span>Überschuss 20 Jahre</span><b>${eur(p.gn)}</b></div><div><span>Rendite p. a.</span><b>${p.ir === null ? '–' : nf(p.ir, 1) + ' %'}</b></div></div>
+     <div class="kp"><div><span>Autarkie</span><b>${p.a} %</b></div><div><span>Ersparnis 1. Jahr</span><b>${eur(p.y1)}</b></div><div><span>Amortisation</span><b>${p.am === null ? '–' : nf(p.am, 1) + ' Jahre'}</b></div><div><span>Rendite p. a.</span><b>${p.ir === null ? '–' : nf(p.ir, 1) + ' %'}</b></div>
+       <div class="big"><span>Ersparnis in 20 Jahren</span><b>${eur(p.gn + p.gr)}</b><small>Stromkosten + Einspeisevergütung</small></div><div class="big g"><span>Ihr Gewinn nach Abzug der Anlage</span><b>${eur(p.gn)}</b><small>Anlagenpreis bereits abgezogen</small></div></div>
      ${(p.oi || []).length ? `<div class="opts"><span class="lb">Optional dazu</span>${p.oi.map((o, j) => `<label class="opt"><input type="checkbox" data-o="${i}.${j}" ${S.sel[i][j] ? 'checked' : ''}> ${esc(o[0])} <b>+${eur(o[1])}</b></label>`).join('')}</div>` : ''}
      <div class="pr"><div class="r">Gesamtpreis (Endbetrag)</div><div class="v">${eur(tot(p, i))}</div><div class="r">oder ca. <b>${eur(rate(p, i))}</b> monatlich bei ${S.t} Jahren${S.down ? ` und ${eur(S.down)} Anzahlung` : ''}</div></div>
      <button class="pick ${i === D.rec ? 'rec' : ''}" data-pick="${i}">Dieses Paket wählen</button>
