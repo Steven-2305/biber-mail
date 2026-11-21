@@ -66,6 +66,8 @@ def main(lat, lon, img, out):
             fp = unary_union([Polygon(r[:, :2]).buffer(0) for r in roofs if len(r) >= 3])
             dist = fp.distance(p)
             if dist < 12: cand.append((dist, -fp.area, bid, roofs))
+    if os.environ.get('ROOF_DSM'):
+        dsm = json.load(open(os.environ['ROOF_DSM'])); cand = [(0, 0, 'dsm', [np.array(r) for r in dsm['roofs']])]
     if not cand: return {'ok': False, 'err': 'kein Gebäude im 3D-Modell gefunden'}
     cand.sort(key=lambda c: (c[0], c[1])); _, _, bid, roofs = cand[0]
     if os.environ.get('ROOF_MERGE'):
@@ -147,10 +149,14 @@ def main(lat, lon, img, out):
     t = f'Mögliche Belegung (Schätzung): ca. {tot} Module'; tw = dd.textlength(t, font=f)
     dd.rounded_rectangle([10, 10, 30 + tw, 44], 8, fill=(190, 0, 13)); dd.text((20, 16), t, fill='white', font=f)
     im.save(out, 'JPEG', quality=72, optimize=True)
+    used = {x['o'] for x in faces if x['o'] != 'flach'}
+    fk = next((k for k in ['O', 'W', 'S', 'N'] if k not in used), 'S')   # Flachdach (Ost-West) in eine freie Rechner-Spalte
+    for m in MODS:
+        if m.get('flat'): m['o'] = fk
     agg = {}
     for x in faces:
-        k = 'S' if x['o'] == 'flach' else x['o']; agg[k] = agg.get(k, 0) + x['n']
+        k = fk if x['o'] == 'flach' else x['o']; agg[k] = agg.get(k, 0) + x['n']
     if os.environ.get('ROOF_MODS'): json.dump({'obs': OBSQ, 'mods': MODS, 'bid': bid, 'X': X, 'Y': Y}, open(os.environ['ROOF_MODS'], 'w'))
-    return {'ok': True, 'total': tot, 'faces': faces, 'byOri': agg, 'flat': any(x['o'] == 'flach' for x in faces), 'bid': bid}
+    return {'ok': True, 'total': tot, 'faces': faces, 'byOri': agg, 'flat': any(x['o'] == 'flach' for x in faces), 'flatKey': fk if any(x['o'] == 'flach' for x in faces) else None, 'bid': bid}
 if __name__ == '__main__':
     print(json.dumps(main(float(sys.argv[1]), float(sys.argv[2]), sys.argv[3], sys.argv[4]), ensure_ascii=False))

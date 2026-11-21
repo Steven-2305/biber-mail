@@ -3,6 +3,7 @@
 export3d.py <lat> <lon> <raw.jpg> <mods.json> <out.json>"""
 import sys, json, numpy as np
 from PIL import Image
+from shapely.geometry import Polygon
 import roofpv as RP, render3d as R3
 SPAN, IW, IH = 70.0, 1000, 700
 def main(lat, lon, raw, modsf, out):
@@ -28,6 +29,18 @@ def main(lat, lon, raw, modsf, out):
                 elif k == 'WallSurface':
                     walls += [x for T in ts for p in T for x in p]
             blds.append({'me': me, 'r': roofs, 'w': walls, 'gz': float(allp[:, 2].min())})
+    if bid == 'dsm':
+        import os
+        dsm = json.load(open(os.environ['ROOF_DSM'])); zmin = float(dsm['ground'])
+        roofs = []
+        for r in dsm['roofs']:
+            ts = R3.tris(np.array(r))
+            if ts: med = np.median(samp(np.vstack(ts)), 0); roofs.append({'t': 'r' if med[0] > med[2] + 18 else 'g', 'v': [x for T in ts for p in T for x in p]})
+        walls = [x for w in dsm['walls'] for T in R3.tris(np.array(w)) for p in T for x in p]
+        blds = [b for b in blds if not Polygon([(0, 0), (1, 0), (1, 1)]).is_empty]
+        fpc = np.array([p for w in dsm['walls'] for p in w])[:, :2].mean(0)
+        blds = [b for b in blds if not b['me']]
+        blds.append({'me': True, 'r': roofs, 'w': walls, 'gz': zmin})
     if zmin is None: raise SystemExit('Gebäude nicht gefunden')
     loc = lambda a: [round(a[i] - (X if i % 3 == 0 else Y if i % 3 == 1 else zmin), 2) for i in range(len(a))]
     for b in blds:
